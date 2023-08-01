@@ -21,7 +21,8 @@ Used parts:
 * WEX012864 2.7″ OLED
 * 5V AC-DC power supply module
   
-
+Developed in Visual Studio Code and ESP-IDF framework.  
+  
 Photo of the device:
 ![Alt text](clock1.jpg?raw=true "Image")  
   
