@@ -43,7 +43,9 @@ void menu_lower_button_hold(void)
       menu_selector_lower_button_hold();
       break;
     
-    default: break;
+    default:
+      menu_main_switch_to_start();//return t clock
+      break;
   }
 }
 
@@ -76,7 +78,12 @@ void menu_main_switch_to_next_mode(void)
 {
   main_menu_mode++;
   if (main_menu_mode >= MENU_MODE_COUNT)
-    main_menu_mode = (menu_mode_t)0;
+    menu_main_switch_to_start();
+}
+
+void menu_main_switch_to_start(void)
+{
+  main_menu_mode = (menu_mode_t)0;
 }
 
 /// @brief Return current mode

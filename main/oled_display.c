@@ -24,6 +24,7 @@
 #define SSD1306_CMD_SET_MULTIPLEX_RATIO					0xA8
 #define SSD1306_CMD_SET_NON_INVERSE_COLOR				0xA6
 #define SSD1306_CMD_SET_CONTRAST								0x81
+#define SSD1305_CMD_SET_BRIGHTNESS						  0x82 //not working?
 #define SSD1306_CMD_SET_COLUMN_ADDR							0x21
 #define SSD1306_PARAM_START_COLUMN_ADDR_MIN			0x00
 #define SSD1306_PARAM_START_COLUMN_ADDR_MAX			0x7F
@@ -162,7 +163,8 @@ void oled_configure(void)
 	oled_send_command_bytes(tmp_buf, 2);
 
 	tmp_buf[0] = SSD1306_CMD_SET_PRECHARGE_PERIOD;
-	tmp_buf[1] = 0x22;
+	//tmp_buf[1] = 0x22;
+  tmp_buf[1] = 0x82;
 	tmp_buf[2] = 0x00;
 	tmp_buf[3] = 0x04;
 	oled_send_command_bytes(tmp_buf, 4);

@@ -40,12 +40,19 @@ int32_t light_sensor_raw = 0;
 uint32_t light_sensor_volt_mv = 0;
 float light_sensor_volt_mv_filtered = 0.0f;
 float light_sensor_volt_mv_slow_filtered = 0.0f;
-uint32_t light_sensor_lux = 0;
+float light_sensor_lux = 0.0f;
 
 /// Counting up if it is dark
 uint32_t light_sensor_night_counter = 0;
 
 bool dimming_auto_enabled = true;
+
+//Used for hysteresis calculation
+//[0]=0; [1] = 3.33; [2] = 10.0; [15] = 96.6
+//So when val>[n], n level will be selected
+float led_switch_levels[DIMMING_LED_MAX_CODE + 1];
+
+//*******************************************************
 
 static void light_sensor_check_efuse(void);
 uint32_t correct_adc(uint32_t adc_value_mv);
@@ -92,6 +99,22 @@ static void light_sensor_check_efuse(void)
 
 void light_sensor_init(void)
 {
+    //Fill hysteresis table "led_switch_levels". 
+    float tmp_percent = 0.0f;
+    uint8_t led_usage_prev = 0;
+    while (tmp_percent < 100.0f)
+    {
+        float led_usage_f = tmp_percent * DIMMING_LED_MAX_CODE / 100.0f;
+        uint8_t led_usage = (uint8_t)roundf(led_usage_f);
+        if (led_usage_prev != led_usage)
+        {
+            led_switch_levels[led_usage_prev + 1] = tmp_percent;
+            led_usage_prev = led_usage;
+        }
+        tmp_percent += 0.01f;
+    }
+    led_switch_levels[0] = 0.0f;
+
     light_sensor_check_efuse();
     adc1_config_width(LIGHT_SENS_ADC_RESOLUTION);
     adc1_config_channel_atten(LIGHT_SENS_ADC_CH, LIGHT_SENS_ADC_ATTEN);
@@ -134,7 +157,7 @@ void light_sensor_handling(void)
 void light_sensor_process_hight_light(void)
 {
     // This value is slower
-    uint32_t light_sensor_lux_filt = light_lensor_get_lux((uint32_t)light_sensor_volt_mv_slow_filtered);
+    uint32_t light_sensor_lux_filt = (uint32_t)light_lensor_get_lux((uint32_t)light_sensor_volt_mv_slow_filtered);
     bool strong_light_flag = (light_sensor_lux_filt > 3);
 
     if (strong_light_flag)
@@ -178,29 +201,29 @@ uint16_t light_sensor_get_volt(void)
     return (uint16_t)light_sensor_volt_mv_filtered;
 }
 
-uint32_t light_lensor_get_cur_lux(void)
+float light_lensor_get_cur_lux(void)
 {
     return light_sensor_lux;
 }
 
-uint32_t light_lensor_get_lux(uint32_t volt_mv)
+float light_lensor_get_lux(uint32_t volt_mv)
 {
     if ((volt_mv < 10) || (volt_mv > LIGHT_SENS_MV_REF))
-        return 0;
+        return 0.0f;
 
     float resistance_kohm = 
         LIGHT_SENS_LOWER_RES * (LIGHT_SENS_MV_REF - (float)volt_mv) / (float)volt_mv;
     if (resistance_kohm < 0.0f)
-        return 0;
+        return 0.0f;
 
     float lux = 2747.738f * powf(resistance_kohm, -1.50915f);
     if (lux < 0.0f)
-        return 0;
+        return 0.0f;
 
     if (lux > 30000)
-        return 30000;
+        return 30000.0f;
 
-    return (uint32_t)lux;
+    return lux;
 }
 
 /// @brief Set brightness of both displays
@@ -217,8 +240,8 @@ void dimming_set_common_brightness(float percent)
     float oled_usage_f = percent * DIMMING_OLED_MAX_CODE / 100.0f * DIMMING_OLED_TO_LED_DIFF;
     if (oled_usage_f > (float)DIMMING_OLED_MAX_CODE)
         oled_usage_f = DIMMING_OLED_MAX_CODE;
-    if (oled_usage_f < 60.0f)
-        oled_usage_f = 60.f;
+    if (oled_usage_f < 10.0f)
+        oled_usage_f = 10.f;
     
      clock_display_change_brightness((uint8_t)roundf(led_usage_f));
      display_change_brightness((uint8_t)roundf(oled_usage_f));
@@ -232,12 +255,32 @@ void dimming_auto_controlling(void)
     
     if (light_sensor_lux < 100.0f)
     {
-        target_percent_f = 2.9f * logf(light_sensor_lux) + 1.6f;
+        //A kind of hysteresis
+        if (light_sensor_lux < 2.1f)
+            target_percent_f = 0;
+        else if (light_sensor_lux > 3.0f)
+            target_percent_f = 2.9f * logf(light_sensor_lux) + 1.6f;
+        else
+            return;
     }
     else
     {
-        target_percent_f = 0.0085859 * light_sensor_lux + 14.14f;
+        target_percent_f = 0.0085859f * light_sensor_lux + 14.14f;
     }
+
+    if (light_sensor_lux > 5.0f)
+    {
+        uint8_t led_value = DIMMING_LED_MAX_CODE;
+        for (int i = 1; i <= DIMMING_LED_MAX_CODE; i++)
+        {
+            float diff = fabs(target_percent_f - led_switch_levels[i]);
+            if (diff < 0.4f)
+            {
+                return;//not stable
+            }
+        }
+    }
+
     dimming_set_common_brightness(target_percent_f);
 }
 

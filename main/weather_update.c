@@ -270,6 +270,9 @@ weather_update_result weather_update_send_process_request(void)
     ESP_LOGI(TAG2, "State1: %i", weather_values.forecast1_state);
     ESP_LOGI(TAG2, "State2: %i", weather_values.forecast2_state);
     ESP_LOGI(TAG2, "Parse res: %li", parse_res);
+
+    ESP_LOGI(TAG2, "sunrise: %d-%d", weather_values.sunrise_time.tm_hour, weather_values.sunrise_time.tm_min);
+    ESP_LOGI(TAG2, "sunset: %d-%d", weather_values.sunset_time.tm_hour, weather_values.sunset_time.tm_min);
     
     weather_values.last_parse_result = parse_res;
     weather_values.last_bytes_rx = total_rx_size;

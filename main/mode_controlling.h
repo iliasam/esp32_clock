@@ -24,6 +24,7 @@ typedef enum
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void menu_main_switch_to_next_mode(void);
+void menu_main_switch_to_start(void);
 void menu_main_init(void);
 
 void menu_lower_button_pressed(void);

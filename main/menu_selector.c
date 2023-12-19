@@ -344,9 +344,9 @@ void menu_selector_draw_brightness_menu(void)
   snprintf(menu_selector_tmp_buf, 32, "УРОВЕНЬ LED: %d", tmp_val);
   display_draw_utf8_string(menu_selector_tmp_buf, 0, 14+13*2, FONT_SIZE_8, 0);
   
-  uint32_t lux = light_lensor_get_cur_lux();
+  float lux = light_lensor_get_cur_lux();
   memset(menu_selector_tmp_buf, 0, sizeof(menu_selector_tmp_buf));
-  snprintf(menu_selector_tmp_buf, 40, "Illumin: %lu lux    ", lux);
+  snprintf(menu_selector_tmp_buf, 40, "Illumin: %.1f lux    ", lux);
   display_draw_utf8_string(menu_selector_tmp_buf, 0, 14+13*3, FONT_SIZE_8, 0);
 }
 
@@ -364,15 +364,15 @@ void menu_selector_draw_drive_brightness_menu(void)
 
 void menu_selector_draw_light_sensor_brightness_menu(void)
 {
-  display_draw_utf8_string("ЯРКОСТЬ ВН. ДАТЧИКА", 0, 0, FONT_SIZE_11, 0);
+  display_draw_utf8_string("ОСВЕЩ. ВН. ДАТЧИКА", 0, 0, FONT_SIZE_11, 0);
   memset(menu_selector_tmp_buf, 0, sizeof(menu_selector_tmp_buf));
   uint16_t tmp_volt_mv = light_sensor_get_volt();
   snprintf(menu_selector_tmp_buf, 40, "VOLT: %d мВ   ", tmp_volt_mv);
   display_draw_utf8_string(menu_selector_tmp_buf, 0, 20, FONT_SIZE_8, 0);
   
-  uint32_t lux = light_lensor_get_cur_lux();
+  float lux = light_lensor_get_cur_lux();
   memset(menu_selector_tmp_buf, 0, sizeof(menu_selector_tmp_buf));
-  snprintf(menu_selector_tmp_buf, 40, "Illumin: %lu lux    ", lux);
+  snprintf(menu_selector_tmp_buf, 40, "Illumin: %.1f lux    ", lux);
   display_draw_utf8_string(menu_selector_tmp_buf, 0, 40, FONT_SIZE_8, 0);
 }
 

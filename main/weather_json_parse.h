@@ -1,6 +1,8 @@
 #ifndef _WEATHER_JSON_PARSE_H
 #define _WEATHER_JSON_PARSE_H
 
+#include <time.h>
+
 typedef enum
 {
     WEATHER_COND_ERROR = 0,//wrong parsing
@@ -18,6 +20,9 @@ typedef struct
     int32_t now_temp_deg;
     int32_t forecast1_temp_deg;//6h
     int32_t forecast2_temp_deg;//12h
+
+    struct tm sunrise_time;
+    struct tm sunset_time;
 
     weather_condition_t forecast1_state;
     weather_condition_t forecast2_state;

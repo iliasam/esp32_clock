@@ -1,4 +1,4 @@
-//LED display is contolled from here
+//OLED display is contolled from here
 
 #include "clock_config.h"
 #include "freertos/FreeRTOS.h"
@@ -46,7 +46,7 @@ const char* month_strings[] =
     "ИЮНЯ",
     "ИЮЛЯ",
     "АВГУСТА",
-    "СЕНТЯБРЯ",
+    "СЕНТЯБ.",
     "ОКТЯБРЯ",
     "НОЯБРЯ",
     "ДЕКАБРЯ",
@@ -295,7 +295,7 @@ void display_draw_basic_temperatures(void)
     //DRAW YANDEX WEATHER
     /*
     weather_values.is_actual_flag = 1;
-    weather_values.now_temp_deg = -10;
+    weather_values.now_temp_deg = -20;
     weather_values.forecast1_temp_deg = -10;
     weather_values.forecast2_temp_deg = -10;
     weather_values.forecast1_state = WEATHER_COND_STRONG_RAIN;
@@ -317,8 +317,8 @@ void display_draw_basic_temperatures(void)
         {
             if (weather_update_is_updating())//network is busy
             {
-                display_draw_string("UPDATING", VFD_BASIC_LEFT_CENTER_X - 3, 20, FONT_SIZE_11, LCD_CENTER_X_FLAG);
-                display_draw_string("WEATHER", VFD_BASIC_LEFT_CENTER_X - 3, (20 + 14), FONT_SIZE_11, LCD_CENTER_X_FLAG);
+                display_draw_string("ОБНОВЛ.", VFD_BASIC_LEFT_CENTER_X - 3, 20, FONT_SIZE_11, LCD_CENTER_X_FLAG);
+                display_draw_string("ПОГОДЫ", VFD_BASIC_LEFT_CENTER_X - 3, (20 + 14), FONT_SIZE_11, LCD_CENTER_X_FLAG);
             }
         }
     }
@@ -332,6 +332,14 @@ void display_draw_internet_weather(uint8_t is_actual)
     snprintf(str_buf, 64, "%li", abs_now_t_deg);
     uint16_t width = display_draw_string(str_buf, VFD_BASIC_LEFT_CENTER_X-4, 0, FONT_SIZE_32, LCD_CENTER_X_FLAG);
     display_draw_string("\xAC", VFD_BASIC_LEFT_CENTER_X-4 + width/2, 17, FONT_SIZE_11, 0);//0xac = 172dec = deg sumbol
+    if (weather_values.now_temp_deg < 0)
+    {
+        uint16_t tmp_x = VFD_BASIC_LEFT_CENTER_X - width/2 - 8;
+        if ((weather_values.now_temp_deg > -20) && (weather_values.now_temp_deg < -9))
+            tmp_x = 10;
+
+        display_draw_utf8_string("-", tmp_x, 10, FONT_SIZE_11, LCD_CENTER_X_FLAG);
+    }
 
     snprintf(str_buf, 64, "%li", weather_values.forecast1_temp_deg);
     display_draw_utf8_string(str_buf, 15, 33, FONT_SIZE_11, LCD_CENTER_X_FLAG);
@@ -424,9 +432,13 @@ void display_draw_basic_mode_date(void)
             timeinfo.tm_mon = 11;
         if (timeinfo.tm_wday > 6)
             timeinfo.tm_wday = 6;
+
         //Day-Month
-        snprintf(strtime_buf, 64, "%u %s", timeinfo.tm_mday, (char*)month_strings[timeinfo.tm_mon]);
-        display_draw_utf8_string(strtime_buf, 91, 1, FONT_SIZE_11, LCD_CENTER_X_FLAG);
+        uint8_t length = snprintf(strtime_buf, 64, "%u %s", timeinfo.tm_mday, (char*)month_strings[timeinfo.tm_mon]);
+        if (length <= 9)
+            display_draw_utf8_string(strtime_buf, 91, 1, FONT_SIZE_11, LCD_CENTER_X_FLAG);
+        else
+            display_draw_utf8_string(strtime_buf, 87, 1, FONT_SIZE_11, LCD_CENTER_X_FLAG);
 
         //Week
         display_draw_utf8_string(

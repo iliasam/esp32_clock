@@ -12,6 +12,7 @@ weather_values_t weather_values;
 
 char *find_json_name(char *source_text, char *name_text);
 int32_t get_json_integer(char **source_text);
+int32_t get_json_time(char **source_text_p, struct tm *time_val);
 char *get_json_string_value(char *source_text);
 weather_condition_t parse_json_condition(char *source_text);
 char *sstrstr(char *source_text, char *needle, size_t length);
@@ -31,6 +32,18 @@ int32_t parse_weather_json(char *data)
     if (find_res_p == NULL)
         return -1;
     weather_values.now_temp_deg = get_json_integer(&find_res_p);
+    data = find_res_p;
+
+    find_res_p = find_json_name(data, "sunrise");
+    if (find_res_p == NULL)
+        return -7;
+    get_json_time(&find_res_p, &weather_values.sunrise_time);
+    data = find_res_p;
+
+    find_res_p = find_json_name(data, "sunset");
+    if (find_res_p == NULL)
+        return -8;
+    get_json_time(&find_res_p, &weather_values.sunset_time);
     data = find_res_p;
 
     // ***** search in "parts" [0]
@@ -177,6 +190,24 @@ int32_t get_json_integer(char **source_text_p)
 
     int res = atoi(find_res_p);
     return res;
+}
+
+/// @brief Extract time from the string like "sunrise":"07:33"
+/// @param source_text_p 
+/// @param time_val 
+/// @return 1 if result is OK
+int32_t get_json_time(char **source_text_p, struct tm *time_val)
+{
+    char *find_res_p = get_json_string_value(*source_text_p);
+    if (find_res_p == NULL)
+        return -1;
+
+    if (sscanf(find_res_p, "%d:%d", &time_val->tm_hour, &time_val->tm_min) <= 0)
+    {
+        return -1;
+    }
+
+    return 1;
 }
 
 // Return pointer to the string value starts with '"'
