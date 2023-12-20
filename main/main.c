@@ -86,7 +86,7 @@ void time_weather_task(void *pvParameter)
     while (1)
     {
         time_update_handler();
-        //weather_update_handler();
+        weather_update_handler();
         nvs_device_time_counter_handling();//do not need low period
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }

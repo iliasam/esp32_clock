@@ -106,6 +106,7 @@ void clock_display_handler(void)
     {
         case MENU_MODE_BASIC:
         case MENU_SELECTOR:
+        case MENU_MODE_SUN_INFO:
             clock_display_time();
             break;
 

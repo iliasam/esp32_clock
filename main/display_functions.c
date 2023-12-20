@@ -372,11 +372,19 @@ void display_draw_vertical_line_dotted(uint16_t x, uint16_t y1, uint16_t y2)
     y1 = y2;
     y2 = tmp;
   }
-  
+
   for (uint16_t y = y1; y <= y2; y++)
   {
-    if ((y & 2) ==0) 
-      display_set_pixel(x, y);
+    if (y1 & 1)
+    {
+      if ((y & 1) ==0) 
+        display_set_pixel(x, y);
+    }
+    else
+    {
+      if (((y + 1) & 1) ==0) 
+        display_set_pixel(x, y);
+    }
   }
 }
 

@@ -34,6 +34,8 @@ typedef struct
 
 #define VFD_CO2_MAX_HEIGHT          (64 - 11)
 
+#define DAY_BAR_HEIGHT              (12)
+
 display_display_state_t display_display_state = {.is_init_flag = 0, .target_brightness = 255,};
 
 const char* month_strings[] = 
@@ -80,11 +82,12 @@ void display_draw_co2_10min_mode(void);
 void display_draw_not_implemented_mode(void);
 void display_draw_co2_bar(uint16_t *data);
 void display_draw_co2_time_markers(uint8_t period);
+void display_draw_sun_info(void);
 void display_draw_internet_weather(uint8_t is_actual);
 void display_draw_new_year_mode(int32_t year);
 bool display_need_disable(void);
 int32_t display_is_new_year_time(void);
-
+float get_norm_day_part(struct tm *time_val);
 
 //*************************************************************************************
 
@@ -136,6 +139,10 @@ void display_drawing_handler(void)
 
         case MENU_MODE_CO2_10MIN:
             display_draw_co2_10min_mode();
+            break;
+
+        case MENU_MODE_SUN_INFO:
+            display_draw_sun_info();
             break;
 
         case MENU_SELECTOR:
@@ -311,14 +318,25 @@ void display_draw_basic_temperatures(void)
         if (weather_update_is_too_old() == false)
         {
             //Not really actual but not old
-            display_draw_internet_weather(0);
+            if (weather_update_is_updating())//network is busy
+            {
+                display_draw_internet_weather(1);
+            }
+            else
+            {
+                display_draw_internet_weather(0);
+            }
         }
         else
         {
             if (weather_update_is_updating())//network is busy
             {
-                display_draw_string("ОБНОВЛ.", VFD_BASIC_LEFT_CENTER_X - 3, 20, FONT_SIZE_11, LCD_CENTER_X_FLAG);
-                display_draw_string("ПОГОДЫ", VFD_BASIC_LEFT_CENTER_X - 3, (20 + 14), FONT_SIZE_11, LCD_CENTER_X_FLAG);
+                display_draw_utf8_string("ОБНОВЛ.", VFD_BASIC_LEFT_CENTER_X - 3, 20, FONT_SIZE_11, LCD_CENTER_X_FLAG);
+                display_draw_utf8_string("ПОГОДЫ", VFD_BASIC_LEFT_CENTER_X - 3, (20 + 14), FONT_SIZE_11, LCD_CENTER_X_FLAG);
+            }
+            else
+            {
+                //EMPTY!
             }
         }
     }
@@ -402,6 +420,76 @@ void display_draw_weather_condition_icon(uint16_t x, uint16_t y, weather_conditi
     }
 
     draw_image((uint8_t*)image, x, y);
+}
+
+/// @brief Draw sun information - sunset/sunrise
+/// @param  
+void display_draw_sun_info(void)
+{
+    char str_buf[64];
+    display_clear_framebuffer();
+    display_draw_utf8_string("СВЕТОВОЙ ДЕНЬ", 5, 0, FONT_SIZE_8, 0);
+
+    struct tm timeinfo;
+    time_t now_binary = time(NULL);
+    localtime_r(&now_binary, &timeinfo);
+
+
+    if ((weather_values.is_actual_flag == 0) || (time_update_is_ok() == 0))
+    {
+        display_draw_utf8_string("НЕТ ДАННЫХ!", 15, 30, FONT_SIZE_8, 0);
+        display_update();
+        return;
+    }
+
+
+    /*
+    weather_values.sunrise_time.tm_hour = 8;
+    weather_values.sunrise_time.tm_min = 58;
+
+    weather_values.sunset_time.tm_hour = 15;
+    weather_values.sunset_time.tm_min = 57;
+    */
+
+    draw_image((uint8_t*)sun_icon, 8, 15);
+
+    snprintf(str_buf, 64, "%d:%02d",  weather_values.sunrise_time.tm_hour, weather_values.sunrise_time.tm_min);
+    display_draw_utf8_string(str_buf, 3, 32, FONT_SIZE_11, 0);
+
+    snprintf(str_buf, 64, "%d:%02d",  weather_values.sunset_time.tm_hour, weather_values.sunset_time.tm_min);
+    display_draw_utf8_string(str_buf, 80, 32, FONT_SIZE_11, 0);
+
+    uint16_t sunrise_x = (uint16_t)(get_norm_day_part(&weather_values.sunrise_time) * 127.0f);
+    uint16_t sunset_x = (uint16_t)(get_norm_day_part(&weather_values.sunset_time) * 127.0f);
+    uint16_t now_x = (uint16_t)(get_norm_day_part(&timeinfo) * 127.0f);
+
+    uint8_t start_y = 48;
+    for (uint16_t x = 0; x < now_x; x++)
+    {
+        if (x & 1) //change dots shift
+            display_draw_vertical_line_dotted(x, start_y, start_y + DAY_BAR_HEIGHT);
+        else
+            display_draw_vertical_line_dotted(x, start_y + 1, start_y + DAY_BAR_HEIGHT);
+    }
+
+    
+    display_draw_line(start_y);//upper line
+    display_draw_line(start_y + DAY_BAR_HEIGHT);//lower line
+    display_draw_vertical_line(0, start_y, start_y + DAY_BAR_HEIGHT);//left
+    display_draw_vertical_line(127, start_y, start_y + DAY_BAR_HEIGHT);//right
+
+    display_draw_vertical_line(sunrise_x, start_y, start_y + DAY_BAR_HEIGHT);
+    display_draw_vertical_line(sunset_x, start_y, start_y + DAY_BAR_HEIGHT);
+
+    display_update();
+}
+
+//Retun 0-1 - convert in from time_val - normalize day duration
+float get_norm_day_part(struct tm *time_val)
+{
+    float hour_f = (float)time_val->tm_hour;
+    hour_f += (float)time_val->tm_min / 60.0f;
+    return (hour_f / 24.0f);
 }
 
 void display_draw_basic_mode_co2(void)

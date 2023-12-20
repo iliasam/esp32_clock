@@ -9,6 +9,7 @@ Features:
 * Displaying current temperature and 6/12h weather forecast using Yandex.Weather data
 * Displaying current outside temperature from a wireless sensor (the same as this devise do: https://github.com/iliasam/EinkTemperatureMonitor ) 
 * Displaying measured CO2 value and drawing CO2 graph
+* Displaying sunrise/sunset  
 * Brightness of the OLED and LED is controlled automatically by internal light sensor.
   
 Used parts:
