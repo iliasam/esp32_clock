@@ -1,4 +1,4 @@
-//OLED display is contolled from here
+//OLED display is controlled from here
 
 #include "clock_config.h"
 #include "freertos/FreeRTOS.h"
@@ -187,9 +187,10 @@ int32_t display_is_new_year_time(void)
     if (time_update_is_ok())
     {
         time_t now_binary = time(NULL);
+        //time_t now_binary = (time_t)1704056414; //test 2024
         localtime_r(&now_binary, &timeinfo);
-        if ((timeinfo.tm_hour == 0) && (timeinfo.tm_mon == 0) && (timeinfo.tm_mday == 1) && (timeinfo.tm_year > 2000))//1 jan
-            return timeinfo.tm_year;
+        if ((timeinfo.tm_hour == 0) && (timeinfo.tm_mon == 0) && (timeinfo.tm_mday == 1) && (timeinfo.tm_year > 100))//1 jan
+            return (timeinfo.tm_year + 1900);
         else
             return -1;
     }
